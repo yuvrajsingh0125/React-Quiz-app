@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import ScoreCard from "./ScoreCard";
-import Spinner from "./Spinner";
+import Spinner from "../../components/Spinner";
 import { motion, AnimatePresence } from "framer-motion";
-import { account } from "./appwriteConfig";
-import { databases } from "./appwriteConfig";
+import { account } from "../../services/appwriteConfig";
+import { databases } from "../../services/appwriteConfig";
 import { ID } from "appwrite";
 
 

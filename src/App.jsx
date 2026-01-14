@@ -1,9 +1,9 @@
 import { useState , useEffect } from "react";
-import StartScreen from "./components/StartScreen";
+import StartScreen from "./games/quiz/StartScreen.jsx";
 import "./App.css";
 import { motion } from "framer-motion";
-import QuizBox from "./components/QuizBox.jsx";
-import { account } from "./components/appwriteConfig";
+import QuizBox from "./games/quiz/QuizBox.jsx";
+import { account } from "./services/appwriteConfig.jsx";
 
 function App() {
   const [quizConfig, setQuizConfig] = useState(null);
