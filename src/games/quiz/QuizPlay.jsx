@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import ScoreCard from "./ScoreCard";
+import QuizResult from "./QuizResult";
 import Spinner from "../../components/Spinner";
 import { motion, AnimatePresence } from "framer-motion";
-import { account } from "../../services/appwriteConfig";
-import { databases } from "../../services/appwriteConfig";
+import { account } from "../../services/appwrite.jsx";
+import { databases } from "../../services/appwrite.jsx";
 import { ID } from "appwrite";
 
 
@@ -122,7 +122,7 @@ const QuizBox = ({ config, onRestart }) => {
 
   if (showScore)
     return (
-      <ScoreCard
+      <QuizResult
         score={score}
         total={questions.length}
         onRestart={onRestart}

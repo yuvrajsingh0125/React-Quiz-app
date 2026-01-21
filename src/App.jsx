@@ -1,9 +1,10 @@
 import { useState , useEffect } from "react";
-import StartScreen from "./games/quiz/StartScreen.jsx";
+import QuizHomePage from "./games/quiz/QuizHomePage.jsx";
 import "./App.css";
 import { motion } from "framer-motion";
-import QuizBox from "./games/quiz/QuizBox.jsx";
-import { account } from "./services/appwriteConfig.jsx";
+import QuizPlay from "./games/quiz/QuizPlay.jsx";
+import { account } from "./services/appwrite.jsx";
+import QuizResult from "./games/quiz/QuizResult.jsx";
 
 function App() {
   const [quizConfig, setQuizConfig] = useState(null);
@@ -37,9 +38,9 @@ function App() {
     <>
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-400 to-blue-600">
         {!quizConfig ? (
-          <StartScreen onStart={handleStart} userId={userId} />
+          <QuizHomePage onStart={handleStart} userId={userId} />
         ) : (
-          <QuizBox config={quizConfig} onStart={handleRestart} />
+          <QuizPlay config={quizConfig} onStart={handleRestart} />
         )}
       </div>
     </>

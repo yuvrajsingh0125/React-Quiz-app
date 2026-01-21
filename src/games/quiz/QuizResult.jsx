@@ -1,9 +1,9 @@
 import React from 'react'
 
-const ScoreCard = () => {
+const QuizResult = () => {
   return (
     <div>ScoreCard</div>
   )
 }
 
-export default ScoreCard
+export default QuizResult
