@@ -1,59 +1,114 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import QuizResult from "./QuizResult";
 import Spinner from "../../components/Spinner";
 import { motion, AnimatePresence } from "framer-motion";
 import { account } from "../../services/appwrite.jsx";
 import { databases } from "../../services/appwrite.jsx";
 import { ID } from "appwrite";
+import { useLocation, useNavigate } from "react-router-dom";
 
+const questionCache = new Map();
 
+const normalizeConfig = (config = {}) => ({
+  amount: Math.min(config.amount || 10, 50),
+  category: config.category || "",
+  difficulty: config.difficulty || "",
+});
 
-const QuizBox = ({ config, onRestart }) => {
+const buildConfigKey = (config = {}) => JSON.stringify(normalizeConfig(config));
+
+const fetchQuestionsForConfig = async (config) => {
+  const normalized = normalizeConfig(config);
+  const key = JSON.stringify(normalized);
+  const cached = questionCache.get(key);
+
+  if (cached?.data) return cached.data;
+  if (cached?.promise) return cached.promise;
+
+  let url = `https://the-trivia-api.com/api/questions?limit=${normalized.amount}&category=${normalized.category}`;
+  if (normalized.difficulty) {
+    url += `&difficulty=${normalized.difficulty}`;
+  }
+
+  const promise = fetch(url)
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error(`API Error: ${res.status} ${res.statusText}`);
+      }
+      return res.json();
+    })
+    .then((data) =>
+      data.map((q) => ({
+        question: q.question,
+        options: [...q.incorrectAnswers, q.correctAnswer].sort(
+          () => Math.random() - 0.5
+        ),
+        answer: q.correctAnswer,
+      }))
+    )
+    .then((formatted) => {
+      questionCache.set(key, { data: formatted });
+      return formatted;
+    })
+    .catch((err) => {
+      questionCache.delete(key);
+      throw err;
+    });
+
+  questionCache.set(key, { promise });
+  return promise;
+};
+
+const QuizBox = ({ config: configProp, onRestart }) => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const resolvedConfig = configProp ?? location.state?.config ?? null;
   const [questions, setQuestions] = useState([]);
   const [index, setIndex] = useState(0);
   const [score, setScore] = useState(0);
   const [selected, setSelected] = useState(null);
   const [timeLeft, setTimeLeft] = useState(15);
   const [showScore, setShowScore] = useState(false);
+  const isAnswered = selected !== null;
 
   useEffect(() => {
-    const fetchQuestions = async () => {
-      try {
-        const amount = Math.min(config.amount || 10, 50);
-        const url = `https://the-trivia-api.com/api/questions?limit=${amount}&category=${config.category}`;
-        const res = await fetch(url);
-        const data = await res.json();
+    if (!resolvedConfig) {
+      navigate("/", { replace: true });
+    }
+  }, [resolvedConfig, navigate]);
 
-        const formatted = data.map((q) => ({
-          question: q.question,
-          options: [...q.incorrectAnswers, q.correctAnswer].sort(
-            () => Math.random() - 0.5
-          ),
-          answer: q.correctAnswer,
-        }));
+  const configKey = useMemo(() => {
+    if (!resolvedConfig) return null;
+    return buildConfigKey(resolvedConfig);
+  }, [
+    resolvedConfig?.amount,
+    resolvedConfig?.category,
+    resolvedConfig?.difficulty,
+  ]);
 
-        setQuestions(formatted);
-      } catch (err) {
-        console.error("Error fetching questions:", err);
-        // setQuestions([
-        //   {
-        //     question:
-        //       "If AI wrote a love letter, who would it most likely send it to?",
-        //     options: ["Electricity", "Wi-Fi", "The Cloud", "The User"],
-        //     answer: "The User",
-        //   },
-        //   {
-        //     question:
-        //       "Which of these inventions would most likely win 'Most Dramatic Impact on Earth'?",
-        //     options: ["Wheel", "Fire", "Internet", "Printing Press"],
-        //     answer: "Internet",
-        //   },
-        // ]);
-      }
+  useEffect(() => {
+    if (!configKey || !resolvedConfig) return;
+    let cancelled = false;
+
+    setQuestions([]);
+    setIndex(0);
+    setScore(0);
+    setSelected(null);
+    setTimeLeft(15);
+    setShowScore(false);
+
+    fetchQuestionsForConfig(resolvedConfig)
+      .then((formatted) => {
+        if (!cancelled) setQuestions(formatted);
+      })
+      .catch((err) => {
+        if (!cancelled) console.error("Error fetching questions:", err);
+      });
+
+    return () => {
+      cancelled = true;
     };
-
-    fetchQuestions();
-  }, [config]);
+  }, [configKey]);
 
   useEffect(() => {
     if (!questions.length) return;  // 🚫 Don’t run until questions are loaded
@@ -71,6 +126,7 @@ const QuizBox = ({ config, onRestart }) => {
   }, [index , questions]);
 
   const handleSelect = (option) => {
+    if (selected !== null) return;
     setSelected(option);
     if (option === questions[index].answer) {
       setScore((prev) => prev + 1);
@@ -85,12 +141,16 @@ const QuizBox = ({ config, onRestart }) => {
     } else {
       setShowScore(true);
       saveScore();
+      navigate("/quiz/result", {
+        state: { score, total: questions.length },
+      });
     }
     console.log("Next triggered at index :",index," Selected:" , selected);
   };
 
 
   const saveScore = async () => {
+    if (!resolvedConfig) return;
     try {
       const user = await account.get();
 
@@ -101,8 +161,8 @@ const QuizBox = ({ config, onRestart }) => {
         {
           userId: user.$id,
           score: score,
-          category: config.category,
-          difficulty: config.difficulty,
+          category: resolvedConfig.category,
+          difficulty: resolvedConfig.difficulty,
           createdAt : new Date().toISOString(),
         }
       );
@@ -130,18 +190,19 @@ const QuizBox = ({ config, onRestart }) => {
     );
 
   return (
-    <div className="bg-white rounded-xl p-6 shadow-lg w-full max-w-xl mx-auto">
+    <div className="bg-white rounded-xl p-8 shadow-lg w-full max-w-xl mx-auto">
       <AnimatePresence mode="wait">
         <motion.div
           key={questions[index]?.question}
+          className="space-y-4"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.3 }}
         >
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex justify-between items-center mb-2">
             <h2
-              className="text-lg font-bold"
+              className="text-lg font-bold text-center flex-1"
               dangerouslySetInnerHTML={{
                 __html: `Q${index + 1}: ${questions[index].question}`,
               }}
@@ -151,11 +212,18 @@ const QuizBox = ({ config, onRestart }) => {
             </span>
           </div>
 
-          <div className="grid gap-3 mb-4">
+          <div className="grid gap-3 mb-2">
             {questions[index].options.map((opt, i) => (
               <button
                 key={i}
-                className={`p-2 border rounded text-left hover:bg-blue-100 ${
+                disabled={isAnswered}
+                className={`p-2 border rounded-lg text-left transition-colors ${
+                  isAnswered
+                    ? selected === opt
+                      ? "cursor-not-allowed"
+                      : "opacity-60 cursor-not-allowed"
+                    : "hover:bg-blue-100"
+                } ${
                   selected === opt
                     ? opt === questions[index].answer
                       ? "bg-green-300"
@@ -170,7 +238,7 @@ const QuizBox = ({ config, onRestart }) => {
 
           <button
             onClick={handleNext}
-            className="w-full bg-blue-700 text-white py-2 font-bold rounded hover:bg-blue-800"
+            className="w-full bg-blue-700 text-white py-2 font-bold rounded-lg transition-colors hover:bg-blue-800"
           >
             {index + 1 === questions.length ? "Finish Quiz" : "Next Question"}
           </button>

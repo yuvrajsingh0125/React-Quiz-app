@@ -1,10 +1,11 @@
-import React from "react";
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const StartScreen = ({ onStart, userId }) => {
   const [difficulty, setDifficulty] = useState("easy");
   const [category, setCategory] = useState("");
+  const navigate = useNavigate();
 
   const categories = [
     "science",
@@ -19,12 +20,19 @@ const StartScreen = ({ onStart, userId }) => {
 
   const handleStart = () => {
     if (!category) return alert("Please select a category.");
-    onStart({ difficulty, category });
+    const nextConfig = { difficulty, category };
+
+    if (typeof onStart === "function") {
+      onStart(nextConfig);
+      return;
+    }
+
+    navigate("/quiz/play", { state: { config: nextConfig } });
   };
 
   return (
     <motion.div
-      className="p-6 bg-white rounded-2xl shadow-lg w-full max-w-md mx-auto"
+      className="p-8 bg-white rounded-2xl shadow-lg w-full max-w-md mx-auto"
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.5 }}
@@ -46,13 +54,13 @@ const StartScreen = ({ onStart, userId }) => {
         onChange={(e) =>
           setDifficulty(["easy", "medium", "hard"][e.target.value])
         }
-        className="w-full mb-2"
+        className="w-full mb-3"
       />
       <label className="block mb-2">Select Category:</label>
       <select
         value={category}
         onChange={(e) => setCategory(e.target.value)}
-        className="w-full p-2 border rounded mb-4"
+        className="w-full p-2 border rounded-lg mb-5"
       >
         <option value="">--Choose a Category--</option>
         {categories.map((cat) => (
@@ -64,7 +72,7 @@ const StartScreen = ({ onStart, userId }) => {
 
       <button
         onClick={handleStart}
-        className="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded"
+        className="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-lg transition-colors hover:shadow-md"
       >
         Start Quiz
       </button>
