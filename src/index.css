@@ -1,2 +1,83 @@
 @import 'tailwindcss';
 
+@theme {
+  --color-background: #0e0e14;
+  --color-surface: #0e0e14;
+  --color-surface-dim: #0e0e14;
+  --color-surface-container-lowest: #000000;
+  --color-surface-container-low: #131319;
+  --color-surface-container: #191920;
+  --color-surface-container-high: #1f1f27;
+  --color-surface-container-highest: #25252e;
+  --color-surface-variant: #25252e;
+  --color-surface-bright: #2b2b35;
+  --color-on-surface: #edeaf2;
+  --color-on-surface-variant: #acaab2;
+  --color-on-background: #edeaf2;
+  --color-outline: #76747c;
+  --color-outline-variant: #48474e;
+  --color-primary: #9da7ff;
+  --color-primary-container: #8c98ff;
+  --color-primary-fixed: #8c98ff;
+  --color-primary-fixed-dim: #7a89ff;
+  --color-primary-dim: #4e62ff;
+  --color-on-primary: #001597;
+  --color-on-primary-container: #000f77;
+  --color-on-primary-fixed: #000000;
+  --color-on-primary-fixed-variant: #001490;
+  --color-inverse-primary: #3449e9;
+  --color-surface-tint: #9da7ff;
+  --color-secondary: #bc87fe;
+  --color-secondary-container: #5e289b;
+  --color-secondary-fixed: #e2c7ff;
+  --color-secondary-fixed-dim: #d7b5ff;
+  --color-secondary-dim: #ba85fb;
+  --color-on-secondary: #340064;
+  --color-on-secondary-container: #e1c5ff;
+  --color-on-secondary-fixed: #4a0b87;
+  --color-on-secondary-fixed-variant: #6834a6;
+  --color-tertiary: #a0fff0;
+  --color-tertiary-container: #4af8e3;
+  --color-tertiary-fixed: #4af8e3;
+  --color-tertiary-fixed-dim: #33e9d5;
+  --color-tertiary-dim: #2de7d2;
+  --color-on-tertiary: #00645a;
+  --color-on-tertiary-container: #005b51;
+  --color-on-tertiary-fixed: #00463f;
+  --color-on-tertiary-fixed-variant: #00655b;
+  --color-error: #ff6e84;
+  --color-error-container: #a70138;
+  --color-error-dim: #d73357;
+  --color-on-error: #490013;
+  --color-on-error-container: #ffb2b9;
+  --color-inverse-surface: #fcf8ff;
+  --color-inverse-on-surface: #55545c;
+
+  --font-family-headline: 'Plus Jakarta Sans', sans-serif;
+  --font-family-body: 'Manrope', sans-serif;
+  --font-family-label: 'Plus Jakarta Sans', sans-serif;
+
+  --radius-DEFAULT: 1rem;
+  --radius-lg: 2rem;
+  --radius-xl: 3rem;
+  --radius-full: 9999px;
+}
+
+@layer base {
+  html { color-scheme: dark; }
+  body {
+    background-color: var(--color-background);
+    color: var(--color-on-surface);
+    font-family: var(--font-family-body);
+  }
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.circular-progress {
+  background:
+    radial-gradient(closest-side, #191920 79%, transparent 80% 100%),
+    conic-gradient(#bc87fe 70%, #25252e 0);
+}
